@@ -1,0 +1,113 @@
+/* --------------------
+   Case Study Questions
+   --------------------*/
+
+-- 1. What is the total amount each customer spent at the restaurant?
+SELECT customer_id, SUM(price) AS total_sales
+FROM dannys_diner.menu m, dannys_diner.sales s
+WHERE m.product_id = s.product_id
+GROUP BY customer_id;
+
+-- 2. How many days has each customer visited the restaurant?
+SELECT customer_id, COUNT(DISTINCT order_date) AS days_count
+FROM dannys_diner.sales s
+GROUP BY customer_id;
+
+-- 3. What was the first item from the menu purchased by each customer?
+WITH cte AS (
+SELECT customer_id, order_date, product_name, DENSE_RANK() OVER(PARTITION BY customer_id ORDER BY order_date) as ranking
+FROM dannys_diner.sales s
+JOIN dannys_diner.menu m ON m.product_id = s.product_id
+)
+
+SELECT customer_id, product_name
+FROM cte
+WHERE ranking = 1
+GROUP BY customer_id, product_name;
+
+-- 4. What is the most purchased item on the menu and how many times was it purchased by all customers?
+SELECT product_name, count(order_date) as num_order
+FROM dannys_diner.sales s
+JOIN dannys_diner.menu m ON m.product_id = s.product_id
+GROUP BY product_name
+ORDER BY num_order desc
+LIMIT 1;
+
+-- 5. Which item was the most popular for each customer?
+WITH cte AS (
+SELECT customer_id, product_name, COUNT(order_date) as num_order, DENSE_RANK() OVER(PARTITION BY customer_id ORDER BY COUNT(order_date) DESC) AS ranking
+FROM dannys_diner.sales s
+JOIN dannys_diner.menu m ON m.product_id = s.product_id
+GROUP BY customer_id, product_name
+)
+
+SELECT customer_id, product_name, num_order
+FROM cte
+WHERE ranking = 1;
+    
+-- 6. Which item was purchased first by the customer after they became a member?
+WITH cte AS (
+SELECT s.customer_id, product_name, order_date, join_date, DENSE_RANK() OVER(PARTITION BY s.customer_id ORDER BY order_date) as order_rank
+FROM dannys_diner.sales s, dannys_diner.members mb, dannys_diner.menu m
+WHERE mb.customer_id = s.customer_id 
+AND m.product_id = s.product_id
+AND join_date <= order_date
+)
+
+SELECT customer_id, product_name
+FROM cte
+WHERE order_rank = 1;
+
+-- 7. Which item was purchased just before the customer became a member?
+WITH cte AS (
+SELECT s.customer_id, product_name, order_date, join_date, DENSE_RANK() OVER(PARTITION BY s.customer_id ORDER BY order_date DESC) as order_rank
+FROM dannys_diner.sales s, dannys_diner.members mb, dannys_diner.menu m
+WHERE mb.customer_id = s.customer_id 
+AND m.product_id = s.product_id
+AND join_date > order_date
+)
+
+SELECT customer_id, product_name
+FROM cte
+WHERE order_rank = 1;
+
+-- 8. What is the total items and amount spent for each member before they became a member?
+SELECT s.customer_id, COUNT(s.product_id), SUM(price)
+FROM dannys_diner.sales s, dannys_diner.members mb, dannys_diner.menu m
+WHERE mb.customer_id = s.customer_id 
+AND m.product_id = s.product_id
+AND join_date > order_date
+GROUP BY s.customer_id;
+
+-- 9.  If each $1 spent equates to 10 points and sushi has a 2x points multiplier - how many points would each customer have?
+WITH cte AS (
+SELECT s.customer_id, product_name, SUM(price)*10 AS total_point
+FROM dannys_diner.sales s, dannys_diner.menu m
+WHERE m.product_id = s.product_id
+GROUP BY s.customer_id, product_name
+ORDER BY customer_id
+)
+
+SELECT customer_id, SUM(CASE WHEN product_name = 'sushi' THEN 2*total_point ELSE total_point END) AS food_point
+FROM cte
+GROUP BY customer_id;
+
+-- 10. In the first week after a customer joins the program (including their join date) they earn 2x points on all items, not just sushi - how many points do customer A and B have at the end of January?
+WITH fw_cte AS (
+SELECT *, join_date + interval '6 days' as first_week
+FROM dannys_diner.members
+)
+
+SELECT 
+	s.customer_id, 
+    SUM(CASE 
+        WHEN product_name = 'sushi' THEN 2*10* m.price
+        WHEN order_date BETWEEN join_date AND first_week THEN 2*10* m.price
+        ELSE 10* m.price END) AS points
+FROM dannys_diner.sales s, fw_cte fw, dannys_diner.menu m
+WHERE fw.customer_id = s.customer_id 
+AND m.product_id = s.product_id
+AND order_date < '2021-02-01'
+AND s.customer_id IN ('A', 'B')
+GROUP BY s.customer_id
+
