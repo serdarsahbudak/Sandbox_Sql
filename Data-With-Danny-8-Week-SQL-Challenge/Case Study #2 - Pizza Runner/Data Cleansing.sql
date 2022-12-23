@@ -16,17 +16,17 @@ CASE
 	ELSE pickup_time END as pickup_time,
 CASE 	
 	WHEN distance LIKE 'null' THEN  ' '
-    WHEN distance LIKE '%km' THEN TRIM('km' from distance)
-    ELSE distance END as distance,
+    	WHEN distance LIKE '%km' THEN TRIM('km' from distance)
+    	ELSE distance END as distance,
 CASE
 	WHEN duration LIKE 'null' THEN ' '
-    WHEN duration LIKE '%mins' THEN TRIM('mins' from duration) 
-    WHEN duration LIKE '%minute' THEN TRIM('minute' from duration)
-    WHEN duration LIKE '%minutes' THEN TRIM('minutes' from duration)
-    ELSE duration END as duration,
+   	 WHEN duration LIKE '%mins' THEN TRIM('mins' from duration) 
+    	WHEN duration LIKE '%minute' THEN TRIM('minute' from duration)
+    	WHEN duration LIKE '%minutes' THEN TRIM('minutes' from duration)
+    	ELSE duration END as duration,
 CASE 
 	WHEN cancellation IS NULL OR cancellation LIKE 'null' THEN ' '
-    ELSE cancellation END as cancellation
+    	ELSE cancellation END as cancellation
 FROM pizza_runner.runner_orders;
 
 SELECT * 
