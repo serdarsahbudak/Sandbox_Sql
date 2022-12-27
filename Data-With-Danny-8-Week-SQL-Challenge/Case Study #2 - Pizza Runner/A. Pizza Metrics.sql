@@ -63,3 +63,9 @@ FROM customer_orders_temp co, runner_orders_temp ro
 WHERE ro.order_id = co.order_id
 AND cancellation IS NULL;
 
+--9) What was the total volume of pizzas ordered for each hour of the day?
+SELECT EXTRACT (HOUR FROM order_time) AS hour_of_day, COUNT(order_id)
+FROM customer_orders_temp
+GROUP BY EXTRACT (HOUR FROM order_time)
+ORDER BY hour_of_day
+
