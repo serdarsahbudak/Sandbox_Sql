@@ -67,5 +67,10 @@ AND cancellation IS NULL;
 SELECT EXTRACT (HOUR FROM order_time) AS hour_of_day, COUNT(order_id)
 FROM customer_orders_temp
 GROUP BY EXTRACT (HOUR FROM order_time)
-ORDER BY hour_of_day
+ORDER BY hour_of_day;
+
+--10) What was the volume of orders for each day of the week?
+SELECT to_char(order_time, 'Day') as day_of_week, COUNT(order_id)
+FROM customer_orders_temp
+GROUP BY to_char(order_time, 'Day');
 
