@@ -92,6 +92,14 @@ SELECT customer_id, SUM(CASE WHEN product_name = 'sushi' THEN 2*total_point ELSE
 FROM cte
 GROUP BY customer_id;
 
+--Alternative solution without cte
+SELECT 
+	s.customer_id, 
+    	SUM(CASE WHEN product_name = 'sushi' THEN (price*20) ELSE (price*10) END) AS total_point
+FROM dannys_diner.menu m, dannys_diner.sales s
+WHERE m.product_id = s.product_id
+GROUP BY s.customer_id;
+
 -- 10. In the first week after a customer joins the program (including their join date) they earn 2x points on all items, not just sushi - how many points do customer A and B have at the end of January?
 WITH fw_cte AS (
 SELECT *, join_date + interval '6 days' as first_week
